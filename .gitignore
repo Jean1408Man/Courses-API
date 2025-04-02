@@ -1,0 +1,11 @@
+# .gitignore
+
+# Carpeta donde se montan los datos persistentes de Postgres
+postgres_data/
+.vscode/
+
+# Archivos de Docker y Python comunes
+__pycache__/
+*.pyc
+.env
+*.db
