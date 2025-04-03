@@ -13,8 +13,9 @@ services:
       - .:/app
     depends_on:
       - db
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/mydb
+    env_file:
+      - .env
+
 
   db:
     image: postgres:15
