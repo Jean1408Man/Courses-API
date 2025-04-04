@@ -12,12 +12,22 @@ class UserInCourse(BaseModel):
     id: int
     username: str
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 class CourseRead(CourseBase):
     id: int
     users: List[UserInCourse] = []
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
+
+class CourseUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+    model_config = {
+        "from_attributes": True
+    }

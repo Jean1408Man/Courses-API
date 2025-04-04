@@ -1,25 +1,42 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
+
 from app.schemas.user import UserCreate
 from app.models.base import User
 from passlib.context import CryptContext
+from app.core.security import verify_password
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def get_user(db: Session, user_id: int):
-    user = db.query(User).filter(User.id == user_id).first()
+
+async def get_user(db: AsyncSession, user_id: int):
+    result = await db.execute(
+        select(User).options(selectinload(User.courses)).where(User.id == user_id)
+    )
+    user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-def get_user_by_email(db: Session, email: str):
-    return db.query(User).filter(User.email == email).first()
 
-def get_users(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(User).offset(skip).limit(limit).all()
+async def get_user_by_email(db: AsyncSession, email: str):
+    result = await db.execute(
+        select(User).options(selectinload(User.courses)).where(User.email == email)
+    )
+    return result.scalar_one_or_none()
 
-def create_user(db: Session, user: UserCreate):
+
+async def get_users(db: AsyncSession, skip: int = 0, limit: int = 100):
+    result = await db.execute(
+        select(User).options(selectinload(User.courses)).offset(skip).limit(limit)
+    )
+    return result.scalars().all()
+
+
+async def create_user(db: AsyncSession, user: UserCreate):
     hashed_password = pwd_context.hash(user.password)
     db_user = User(
         username=user.username,
@@ -28,27 +45,44 @@ def create_user(db: Session, user: UserCreate):
     )
     db.add(db_user)
     try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Email already registered")
-    db.refresh(db_user)
-    return db_user
+        await db.commit()
+        result = await db.execute(
+            select(User).options(selectinload(User.courses)).where(User.id == db_user.id)
+        )
+        return result.scalar_one()
+    except IntegrityError as e:
+        await db.rollback()
+        print("Error:", e)
+        raise HTTPException(status_code=400, detail="Email o usuario ya registrado")
 
-def delete_user(db: Session, user_id: int):
-    user = get_user(db, user_id)
-    db.delete(user)
-    db.commit()
+
+async def delete_user(db: AsyncSession, user_id: int):
+    user = await get_user(db, user_id)
+    await db.delete(user)
+    await db.commit()
     return user
 
-def update_user(db: Session, user_id: int, new_data: dict):
-    user = get_user(db, user_id)
+
+async def update_user(db: AsyncSession, user_id: int, new_data: dict):
+    user = await get_user(db, user_id)
     for key, value in new_data.items():
         setattr(user, key, value)
     try:
-        db.commit()
+        await db.commit()
+        # Recargar el usuario con cursos después del update
+        result = await db.execute(
+            select(User).options(selectinload(User.courses)).where(User.id == user.id)
+        )
+        return result.scalar_one()
     except IntegrityError:
-        db.rollback()
+        await db.rollback()
         raise HTTPException(status_code=400, detail="Update failed due to data conflict")
-    db.refresh(user)
+
+
+async def authenticate_user(db: AsyncSession, email: str, password: str):
+    user = await get_user_by_email(db, email)
+    if not user:
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
     return user

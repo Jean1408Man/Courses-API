@@ -3,7 +3,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from app.models.base import User
-from app.db.database import SessionLocal
+from app.db.database import AsyncSessionLocal as Session
 import os
 from dotenv import load_dotenv
 
