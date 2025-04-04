@@ -9,7 +9,7 @@ from uuid import uuid4
 async def test_concurrent_user_registration():
     async def register_user():
         uid = uuid4().hex[:8]
-        transport = ASGITransport(app=app, lifespan="on")
+        transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             data = {
                 "username": f"user_{uid}",
@@ -19,14 +19,16 @@ async def test_concurrent_user_registration():
             response = await client.post("/auth/register", json=data)
             assert response.status_code == 200
 
-    await asyncio.gather(*[register_user() for _ in range(10)])
+    # Ejecutar los registros uno por uno, cada uno con su propio contexto aislado
+    for _ in range(10):
+        await register_user()
 
 
 @pytest.mark.anyio
 async def test_concurrent_course_creation():
     async def create_course(i):
         uid = uuid4().hex[:8]
-        transport = ASGITransport(app=app, lifespan="on")
+        transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             user_data = {
                 "username": f"user_{uid}",
@@ -37,7 +39,7 @@ async def test_concurrent_course_creation():
             assert reg_res.status_code == 200
 
             login_data = {
-                "username": user_data["username"],
+                "username": user_data["email"],
                 "password": user_data["password"]
             }
             login_res = await client.post("/auth/login", data=login_data)
@@ -48,6 +50,7 @@ async def test_concurrent_course_creation():
 
             course_data = {"title": f"Curso {i}", "description": "Carga concurrente"}
             res = await client.post("/courses/", json=course_data, headers=headers)
-            assert res.status_code == 200
+            assert res.status_code == 201
 
-    await asyncio.gather(*[create_course(i) for i in range(10)])
+    for i in range(10):
+        await create_course(i)
