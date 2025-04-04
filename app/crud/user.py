@@ -56,11 +56,15 @@ async def create_user(db: AsyncSession, user: UserCreate):
         raise HTTPException(status_code=400, detail="Email o usuario ya registrado")
 
 
-async def delete_user(db: AsyncSession, user_id: int):
-    user = await get_user(db, user_id)
+async def delete_user(db: AsyncSession, user_id: int) -> bool:
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        return False
     await db.delete(user)
     await db.commit()
-    return user
+    return True
+
 
 
 async def update_user(db: AsyncSession, user_id: int, new_data: dict):

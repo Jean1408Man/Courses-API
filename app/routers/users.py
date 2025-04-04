@@ -49,3 +49,17 @@ async def update_user_by_id(
 
     updated_user = await user_crud.update_user(db, user_id, user_update.dict(exclude_unset=True))
     return updated_user
+
+@router.delete("/{user_id}", status_code=200)
+async def delete_user_by_id(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    if user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="No autorizado para eliminar este usuario")
+
+    deleted = await user_crud.delete_user(db, user_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return {"detail": "Usuario eliminado"}

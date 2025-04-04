@@ -17,6 +17,8 @@ RUN pip install debugpy
 # Copiar el resto del código
 COPY . .
 
+ENV PYTHONPATH=/app
+
 # Puerto de FastAPI
 EXPOSE 8000
 # Puerto para el debugger

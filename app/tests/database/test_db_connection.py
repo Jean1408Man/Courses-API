@@ -1,16 +1,11 @@
-# app/test_db_connection.py
-from app.db.database import SessionLocal
+# app/tests/database/test_db_connection.py
+import pytest
 from sqlalchemy import text
+from app.db.database import AsyncSessionLocal
 
-def test_connection():
-    db = SessionLocal()
-    try:
-        result = db.execute(text("SELECT 1"))
-        print("✅ Conexión exitosa:", result.scalar())  # Debería imprimir: 1
-    except Exception as e:
-        print("❌ Error en la conexión:", e)
-    finally:
-        db.close()
-
-if __name__ == "__main__":
-    test_connection()
+@pytest.mark.asyncio
+async def test_db_connection():
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(text("SELECT 1"))
+        value = result.scalar()
+        assert value == 1
