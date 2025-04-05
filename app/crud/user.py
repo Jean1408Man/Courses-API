@@ -28,6 +28,12 @@ async def get_user_by_email(db: AsyncSession, email: str):
     )
     return result.scalar_one_or_none()
 
+async def get_user_by_username(db: AsyncSession, username: str):
+    result = await db.execute(
+        select(User).options(selectinload(User.courses)).where(User.username == username)
+    )
+    return result.scalar_one_or_none()
+
 
 async def get_users(db: AsyncSession, skip: int = 0, limit: int = 100):
     result = await db.execute(
@@ -83,10 +89,11 @@ async def update_user(db: AsyncSession, user_id: int, new_data: dict):
         raise HTTPException(status_code=400, detail="Update failed due to data conflict")
 
 
-async def authenticate_user(db: AsyncSession, email: str, password: str):
-    user = await get_user_by_email(db, email)
+async def authenticate_user(db: AsyncSession, username: str, password: str):
+    user = await get_user_by_username(db, username)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
         return None
     return user
+
