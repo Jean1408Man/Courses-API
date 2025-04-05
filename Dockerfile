@@ -1,5 +1,3 @@
-# Dockerfile
-
 FROM python:3.11-slim
 
 # Crear directorio de trabajo
@@ -24,5 +22,5 @@ EXPOSE 8000
 # Puerto para el debugger
 EXPOSE 5678
 
-# Comando para arrancar con debugger y esperar conexión de VS Code
-CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Comando para arrancar con debugger sin esperar conexión
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
