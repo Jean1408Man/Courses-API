@@ -17,7 +17,7 @@ async def test_login_user(async_client, unique_user_data):
 
     # Login con email (requerido por OAuth2PasswordRequestForm)
     login_data = {
-        "username": unique_user_data["email"],
+        "username": unique_user_data["username"],
         "password": unique_user_data["password"]
     }
     response = await async_client.post("/auth/login", data=login_data)
@@ -39,7 +39,7 @@ async def test_login_with_wrong_password(async_client, unique_user_data):
     await async_client.post("/auth/register", json=unique_user_data)
 
     login_data = {
-        "username": unique_user_data["email"],
+        "username": unique_user_data["username"],
         "password": "wrongpassword"
     }
     response = await async_client.post("/auth/login", data=login_data)

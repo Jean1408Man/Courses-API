@@ -67,7 +67,7 @@ async def register_and_login_user(async_client, unique_user_data):
 
     # Login
     login_data = {
-        "username": unique_user_data["email"],  # 👈 este cambio
+        "username": unique_user_data["username"], 
         "password": unique_user_data["password"]
     }
 

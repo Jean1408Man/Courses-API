@@ -39,7 +39,7 @@ async def test_concurrent_course_creation():
             assert reg_res.status_code == 200
 
             login_data = {
-                "username": user_data["email"],
+                "username": user_data["username"],
                 "password": user_data["password"]
             }
             login_res = await client.post("/auth/login", data=login_data)
